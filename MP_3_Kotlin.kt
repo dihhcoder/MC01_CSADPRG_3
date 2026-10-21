@@ -241,7 +241,7 @@ fun main() {
         6 -> {
                 println("Show Interest Amount")
                 println("Account Name: $accountName")
-                println("Current Balance: %.2f".format(currentBalance))
+                println("Current Balance: %.2f".format(defaultBalance))
                 println("Currency: $defaultCurrency")
                 println("Interest Rate: $interest%")
                 print("\nTotal Number of Days: ")
