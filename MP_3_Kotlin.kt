@@ -8,7 +8,7 @@ Paradigm(s): Functional, Object-Oriented
 
 fun menu(): Boolean {
     var decision: String
-    print("\nBack to the Main Menu (Y/N)? ... ")
+    print("\nBack to the Main Menu (Y/N): ")
     decision = readln()
     print("\n")
     if (decision == "Y" || decision == "y")
@@ -43,8 +43,10 @@ fun withdraw(name: String, balance: Double, currency: String): Double {
 
 fun main() {
     var loop = true
+    var currencyLoop = true
     var choice: Int
-    var choiceRecord: String
+    var choiceCurrency: String
+    var choiceRecord: Int
     var accountName: String = "N/A"
     var defaultBalance: Double = 1000.00
     var currentBalance: Double = 1000.00
@@ -89,6 +91,11 @@ fun main() {
         
         2 -> {
                 depositAmount = deposit(accountName,defaultBalance,defaultCurrency)
+                while (depositAmount < 0) {
+                    println("Invalid amount!")
+                    print("\nDeposit Amount: ")
+                    depositAmount = readln().toDouble()
+                }
                 newBalance = defaultBalance + depositAmount
                 println("Updated Balance: %.2f".format(newBalance))
                 loop = menu()
@@ -97,58 +104,98 @@ fun main() {
 
         3 -> {
                 withdrawAmount = withdraw(accountName,defaultBalance,defaultCurrency)
+                while (withdrawAmount > defaultBalance || withdrawAmount < 0) {
+                    println("Invalid amount!")
+                    print("\nWithdraw Amount: ")
+                    withdrawAmount = readln().toDouble()
+                }
                 newBalance = defaultBalance - withdrawAmount
                 println("Updated Balance: %.2f".format(newBalance))
                 loop = menu()
             }
 
         4 -> {
-                println("Foreign Currency Exchange")
-                println("Source Currency Option:")
-                println("[1] Philippine Peso (PHP)")
-                println("[2] United States Dollar (USD)")
-                println("[3] Japanese Yen (JPY)")
-                println("[4] British Pound Sterling (GBP)")
-                println("[5] Euro (EUR)")
-                println("[6] Chinese Yuan Renminni (CNY)")
-                print("\nSource Currency: ")
-                sourceCurrency = readln().toInt()
+                currencyLoop = true
+                while (currencyLoop) {
+                    println("Foreign Currency Exchange")
+                    println("Source Currency Option:")
+                    println("[1] Philippine Peso (PHP)")
+                    println("[2] United States Dollar (USD)")
+                    println("[3] Japanese Yen (JPY)")
+                    println("[4] British Pound Sterling (GBP)")
+                    println("[5] Euro (EUR)")
+                    println("[6] Chinese Yuan Renminni (CNY)")
+                    print("\nSource Currency: ")
+                    sourceCurrency = readln().toInt()
 
-                when (sourceCurrency) {
-                    1 -> sourceRate = php
-                    2 -> sourceRate = usd
-                    3 -> sourceRate = jpy
-                    4 -> sourceRate = gbp
-                    5 -> sourceRate = eur
-                    6 -> sourceRate = cny
-                    else -> println("Invalid choice!\n")
+                    while (sourceCurrency < 1 || sourceCurrency > 6) {
+                        println("Invalid choice!")
+                        print("\nSource Currency: ")
+                        sourceCurrency = readln().toInt()
+                    }
+
+                        sourceRate = when (sourceCurrency) {
+                            1 -> php
+                            2 -> usd
+                            3 -> jpy
+                            4 -> gbp
+                            5 -> eur
+                            6 -> cny
+                            else -> 0.0
+                        }
+
+                    print("Source Amount: ")
+                    sourceAmount = readln().toDouble()
+
+                    while (sourceAmount <= 0) {
+                        println("Invalid amount!")
+                        print("\nSource Amount: ")
+                        sourceAmount = readln().toDouble()
+                    }
+
+                    println("\nExchanged Currency Option:")
+                    println("[1] Philippine Peso (PHP)")
+                    println("[2] United States Dollar (USD)")
+                    println("[3] Japanese Yen (JPY)")
+                    println("[4] British Pound Sterling (GBP)")
+                    println("[5] Euro (EUR)")
+                    println("[6] Chinese Yuan Renminni (CNY)")
+                    print("\nExchange Currency: ")
+                    exchangeCurrency = readln().toInt()
+
+                    while (exchangeCurrency == sourceCurrency) {
+                        println("Source Currency and Exchange Currency is the SAME!")
+                        print("\nExchange Currency: ")
+                        exchangeCurrency = readln().toInt()
+                    }
+
+                    while (exchangeCurrency < 1 || exchangeCurrency > 6) {
+                        println("Invalid choice!")
+                        print("\nExchange Currency: ")
+                        exchangeCurrency = readln().toInt()
+                    }
+
+                        exchangeRate = when (exchangeCurrency) {
+                            1 -> php
+                            2 -> usd
+                            3 -> jpy
+                            4 -> gbp
+                            5 -> eur
+                            6 -> cny
+                            else -> 0.0
+                        }
+
+                    exchangeAmount = sourceAmount * (sourceRate/exchangeRate)
+                    print("Exchange Amount: %.2f".format(exchangeAmount))
+                    print("\nConvert another currency (Y/N) ... ")
+                    choiceCurrency = readln()
+                    if (choiceCurrency == "Y" || choiceCurrency == "y") {
+                        currencyLoop = true
+                        print("\n")
+                    }
+                    else
+                        currencyLoop = false
                 }
-
-                print("Source Amount: ")
-                sourceAmount = readln().toDouble()
-
-                println("\nExchanged Currency Option:")
-                println("[1] Philippine Peso (PHP)")
-                println("[2] United States Dollar (USD)")
-                println("[3] Japanese Yen (JPY)")
-                println("[4] British Pound Sterling (GBP)")
-                println("[5] Euro (EUR)")
-                println("[6] Chinese Yuan Renminni (CNY)")
-                print("\nExchange Currency: ")
-                exchangeCurrency = readln().toInt()
-
-                when (exchangeCurrency) {
-                    1 -> exchangeRate = php
-                    2 -> exchangeRate = usd
-                    3 -> exchangeRate = jpy
-                    4 -> exchangeRate = gbp
-                    5 -> exchangeRate = eur
-                    6 -> exchangeRate = cny
-                    else -> println("Invalid choice!\n")
-                }
-
-                exchangeAmount = sourceAmount * (sourceRate/exchangeRate)
-                print("Exchange Amount: %.2f".format(exchangeAmount))
                 loop = menu()
             }
 
@@ -161,18 +208,33 @@ fun main() {
                 println("[5] Euro (EUR)")
                 println("[6] Chinese Yuan Renminni (CNY)")
                 print("\nSelect Foreign Currency: ")
-                choiceRecord = readln()
+                choiceRecord = readln().toInt()
+
+                while (choiceRecord < 1 || choiceRecord > 6) {
+                    println("Invalid Foreign Currency!")
+                    print("\nSelect Foreign Currency: ")
+                    choiceRecord = readln().toInt()
+                }
+
                 print("Exchange Rate: ")
                 exchangeRate = readln().toDouble()
+
+                while (exchangeRate <= 0) {
+                    println("Invalid Exchange Rate!")
+                    print("\nExchange Rate: ")
+                    exchangeRate = readln().toDouble()
+                }
+                
                 when (choiceRecord) {
-                    "[1]" -> php = exchangeRate
-                    "[2]" -> usd = exchangeRate
-                    "[3]" -> jpy = exchangeRate
-                    "[4]" -> gbp = exchangeRate
-                    "[5]" -> eur = exchangeRate
-                    "[6]" -> cny = exchangeRate
+                    1 -> php = exchangeRate
+                    2 -> usd = exchangeRate
+                    3 -> jpy = exchangeRate
+                    4 -> gbp = exchangeRate
+                    5 -> eur = exchangeRate
+                    6 -> cny = exchangeRate
                     else -> println("Invalid choice!\n")
                 }
+
                 loop = menu()
             }
 
@@ -184,6 +246,12 @@ fun main() {
                 println("Interest Rate: $interest%")
                 print("\nTotal Number of Days: ")
                 interestDays = readln().toInt()
+
+                while (interestDays < 1 || interestDays > 30) {
+                    println("Invalid number of days!")
+                    print("\nTotal Number of Days: ")
+                    interestDays = readln().toInt()
+                }
 
                 for (i in 1..interestDays) {
                     dailyInterest = currentBalance * (0.05/365.00)
@@ -197,6 +265,7 @@ fun main() {
     }
     }
 }
+
 
 // Use this to run the program:
 // kotlinc MP_3_Kotlin.kt -include-runtime -d MP_3_Kotlin.jar && java -jar MP_3_Kotlin.jar
