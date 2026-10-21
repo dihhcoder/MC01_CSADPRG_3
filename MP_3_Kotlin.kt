@@ -199,4 +199,4 @@ fun main() {
 }
 
 // Use this to run the program:
-// kotlinc MCO1_3_Kotlin.kt -include-runtime -d MCO1_3_Kotlin.jar && java -jar MCO1_3_Kotlin.jar
+// kotlinc MP_3_Kotlin.kt -include-runtime -d MP_3_Kotlin.jar && java -jar MP_3_Kotlin.jar
