@@ -4,7 +4,10 @@
 # Paradigm(s): Procedural, Functional
 #********************
 
-# if in VS code and windows 11, 
+# to run the program (requires R 4.0 or newer)
+# download and install R from https://cloud.r-project.org
+
+# if in VS code and Windows 11, 
 # Click the Search icon on the taskbar and type "environment variables"
 # Select "Edit the system environment variables" (Control panel)
 # In System Properties (Advanced tab), click "Environment Variables"
@@ -14,8 +17,9 @@
 # Fully close VS Code (File > Exit) and reopen it
 # In the VS Code terminal, run: Rscript --version (it should show version 4.6.1).
 # Run the program: Rscript MP_3_R.R
-# Alternative: Download R studio through postit.co then open MP_3_R.R in RStudio and click "Source"
 
+# Alternative: download RStudio Desktop from https://posit.co/download/rstudio-desktop/
+# then open MP_3_R.R in RStudio using file and click the "Source" button
 
 # constants
 
