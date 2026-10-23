@@ -13,6 +13,9 @@ Paradigm(s): Functional, Object-Oriented
 // Use this to compile and run the program:
 // kotlinc MP_3_Kotlin.kt -include-runtime -d MP_3_Kotlin.jar && java -jar MP_3_Kotlin.jar
 
+// to roundup for interest
+import kotlin.math.ceil
+
 // currency to pass
 fun getCurrencyList(): List<String> {
     return listOf("PHP", "USD", "JPY", "GBP", "EUR", "CNY")
@@ -49,6 +52,8 @@ fun menu(): Boolean {
             loop = false
             verdict = false
             println("Thank you for using the Banking and Currency Exchange Application.")
+        } else {
+            println("Invalid input! Y or N only.")
         }
     }
     return verdict
@@ -78,8 +83,7 @@ fun register(account: String):String {
             println("Register Account Name")
             print("Account Name: ")
             name = readln()
-            // very generous
-            println("Thank you for registering! As a gift 1000 PHP has been deposited to your account.")
+            println("Thank you for registering!")
             loop = false
         } else {
             println("Account already made!")
@@ -108,7 +112,7 @@ fun deposit(name: String, balance: Double, currency: String, currencyList: List<
     
     do {
         print("\nTransaction Currency: ")
-        choice = readln().toInt()
+        choice = readln().toIntOrNull() ?: -1
         if (choice !in 1..currencyList.size)
             println("Invalid choice!")
     } while (choice !in 1..currencyList.size)
@@ -117,7 +121,7 @@ fun deposit(name: String, balance: Double, currency: String, currencyList: List<
 
     do {
         print("\nDeposit Amount in $transactionCurrency: ")
-        amount = readln().toDouble()
+        amount = readln().toDoubleOrNull() ?: 0.00
         if (amount < 0)
             println("Invalid amount!")
     } while (amount < 0)
@@ -146,7 +150,7 @@ fun withdraw(name: String, balance: Double, currency: String, currencyList: List
 
     do {
         print("\nTransaction Currency: ")
-        choice = readln().toInt()
+        choice = readln().toIntOrNull() ?: -1
         if (choice !in 1..currencyList.size)
             println("Invalid choice!")
     } while (choice !in 1..currencyList.size)
@@ -156,7 +160,7 @@ fun withdraw(name: String, balance: Double, currency: String, currencyList: List
 
     do {
         print("\nWithdraw Amount in $transactionCurrency: ")
-        amount = readln().toDouble()
+        amount = readln().toDoubleOrNull() ?: 0.00
         convertedAmount = amount * conversionRate
         if (convertedAmount < 0 || convertedAmount > balance)
             println("Invalid amount!")
@@ -187,7 +191,7 @@ fun exchange(currencyList: List<String>, rates: MutableMap<String, Double>) {
         
         do {
             print("\nSource Currency: ")
-            choice = readln().toInt()
+            choice = readln().toIntOrNull() ?: -1
             if (choice !in 1..currencyList.size)
                 println("Invalid choice!")
         } while (choice !in 1..currencyList.size)
@@ -197,7 +201,7 @@ fun exchange(currencyList: List<String>, rates: MutableMap<String, Double>) {
 
         do {
             print("Source Amount: ")
-            sourceAmount = readln().toDouble()
+            sourceAmount = readln().toDoubleOrNull() ?: 0.00
         } while (sourceAmount <= 0)
 
         println("\nExchange Currency Option:")
@@ -205,7 +209,7 @@ fun exchange(currencyList: List<String>, rates: MutableMap<String, Double>) {
 
         do {
             print("\nExchange Currency: ")
-            choice = readln().toInt()
+            choice = readln().toIntOrNull() ?: -1
             if (choice !in 1..currencyList.size)
                 println("Invalid choice!")
         } while (choice !in 1..currencyList.size)
@@ -246,14 +250,14 @@ fun record(currencyList: List<String>, oldRates: MutableMap<String, Double>) {
     
     do {
         print("\nSelect Currency: ")
-        choice = readln().toInt()
+        choice = readln().toIntOrNull() ?: -1
         if (choice !in 1..currencyList.size)
             println("Invalid choice!")
     } while (choice !in 1..currencyList.size)
                 
     do {
         print("Exchange Rate: ")
-        exchangeRate = readln().toDouble()
+        exchangeRate = readln().toDoubleOrNull() ?: 0.00
     } while (exchangeRate <= 0)
                 
     exchangeCurrency = currencyList[choice-1]
@@ -269,23 +273,28 @@ fun interest(name: String, balance: Double, currency: String, interest: Double, 
     var newDaily = daily
     var newBalance = balance
 
+    var rawDaily: Double
+    var roundedBalance: Double
+
     println("Show Interest Amount")
     println("Account Name: $name")
     println("Current Balance: %.2f".format(newBalance))
     println("Currency: $currency")
-    println("Interest Rate: $interest%")
+    println("Interest Rate: %.2f %%".format(interest*100))
 
     do {
         print("\nTotal Number of Days: ")
-        days = readln().toInt()
+        days = readln().toIntOrNull() ?: -1
         if (days < 1 || days > 30)
             println("Invalid number of days!")
     } while (days < 1 || days > 30) 
 
     for (i in 1..days) {
-        newDaily = newBalance * (interest/years)
+        rawDaily = newBalance * (interest / years)
+        newDaily = ceil(rawDaily * 100.0) / 100.0
         newBalance += newDaily
-        println("$i \t| ${"%.2f".format(newDaily)} \t| ${"%.2f".format(newBalance)} \t|")
+        roundedBalance = ceil(newBalance * 100.0) / 100.0
+        println("$i \t| ${"%.2f".format(newDaily)} \t| ${"%.2f".format(roundedBalance)} \t|")
     }
 }
 
@@ -294,7 +303,7 @@ fun main() {
     var nameLoop = true
     var choice: Int
     var accountName: String = "N/A"
-    var currentBalance: Double = 1000.00
+    var currentBalance: Double = 00.00
     var newBalance: Double = 0.00
     var depositAmount: Double = 0.00
     var withdrawAmount: Double = 0.00
@@ -315,7 +324,7 @@ fun main() {
     println("[5] Record Exchange Rates")
     println("[6] Show Interest Amount")
     print("\nChoice: ")
-    choice = readln().toInt()
+    choice = readln().toIntOrNull() ?: -1
     print("\n")
 
     when (choice) {
@@ -347,6 +356,9 @@ fun main() {
                 if (accountName == "N/A") {
                     println("Register First!")
                     nameLoop = false
+                } else if (currentBalance <= 0.00){
+                    println("Account has no balance!")
+                    nameLoop = false
                 } else {
                     withdrawAmount = withdraw(accountName,currentBalance,defaultCurrency,myCurrencies,myRates)
                     currentBalance -= withdrawAmount
@@ -372,6 +384,9 @@ fun main() {
                 do {
                 if (accountName == "N/A") {
                     println("Register First!")
+                    nameLoop = false
+                } else if (currentBalance <= 0.00){
+                    println("Account has no balance!")
                     nameLoop = false
                 } else {
                     interest(accountName,currentBalance,defaultCurrency,interest,dailyInterest,daysYear)
