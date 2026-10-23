@@ -4,16 +4,29 @@
 # Paradigm(s): Procedural, Functional
 #********************
 
-# to run the program (requires R 4.0 or newer)
-#   Rscript MP_3_R.R
-# or open it in RStudio and click Source
-
+# if in VS code and windows 11, 
+# Click the Search icon on the taskbar and type "environment variables"
+# Select "Edit the system environment variables" (Control panel)
+# In System Properties (Advanced tab), click "Environment Variables"
+# In the top box "User variables for ___ ", click "Path", then click "Edit..."
+# Click "New" and paste: C:\Program Files\R\R-4.6.1\bin
+# Click OK on all three windows
+# Fully close VS Code (File > Exit) and reopen it
+# In the VS Code terminal, run: Rscript --version (it should show version 4.6.1).
+# Run the program: Rscript MP_3_R.R
+# Alternative: Download R studio through postit.co then open MP_3_R.R in RStudio and click "Source"
 
 
 # constants
 
-INTEREST_RATE <- 0.05
+ANNUAL_INTEREST_PCT <- 5
 DAYS_PER_YEAR <- 365
+MAX_PROJECTION_DAYS <- 3650
+
+# limits so that the numbers arent too big
+MAX_TXN_AMOUNT <- 1000000000
+MAX_RATE <- 1000000
+MAX_BALANCE <- 1000000000000
 
 # php is the base currency so its rate is always 1
 CURRENCY_CODES <- c("PHP", "USD", "JPY", "GBP", "EUR", "CNY")
@@ -28,7 +41,7 @@ CURRENCY_NAMES <- c("Philippine Peso", "United States Dollar", "Japanese Yen",
 # stdin connection so it can work in rscript
 input_con <- if (interactive()) NULL else file("stdin", open = "r")
 
-# reads one line tapos exit na pag wala ng input
+# reads one line then exit if no input
 read_input <- function(prompt) {
   if (interactive()) {
     line <- readline(prompt)
@@ -55,15 +68,15 @@ read_int <- function(prompt, min, max) {
   }
 }
 
-# ask again hanggang greater than zero yung number
-read_amount <- function(prompt) {
+# ask again til greater than zero and not over max yung number
+read_amount <- function(prompt, max) {
   repeat {
     input <- read_input(prompt)
     if (grepl("^[0-9]*\\.?[0-9]+$|^[0-9]+\\.$", input)) {
       value <- as.numeric(input)
-      if (value > 0) return(value)
+      if (value > 0 && value <= max) return(value)
     }
-    cat("Invalid input. Enter a number greater than 0.\n")
+    cat(sprintf("Invalid input. Enter a number greater than 0 (up to %.0f).\n", max))
   }
 }
 
@@ -78,10 +91,24 @@ read_yes_no <- function(prompt) {
 
 
 
-# display helpers
+# money helpers
 
 # formats a number with two decimal places
 money <- function(x) formatC(x, format = "f", digits = 2, big.mark = "")
+
+# amount to php rounded half up to the nearest centavo
+to_php <- function(amount, rate) floor(amount * rate * 100 + 0.5) / 100
+
+# daily interest in centavos rounded half up
+# whole number math lang para walang rounding error
+daily_interest <- function(cents) {
+  divisor <- 100 * DAYS_PER_YEAR
+  (cents * ANNUAL_INTEREST_PCT + divisor %/% 2) %/% divisor
+}
+
+
+
+# display helpers
 
 print_main_menu <- function() {
   cat("\nSelect Transaction:\n")
@@ -130,6 +157,7 @@ register_account <- function(account) {
     if (nchar(name) > 0) break
     cat("Account name cannot be empty.\n")
   }
+  cat("Account registered.\n")
   list(name = name, balance = 0)
 }
 
@@ -145,14 +173,34 @@ transact <- function(account, rates, is_deposit) {
   id <- read_int("Transaction Currency: ", 1, length(CURRENCY_CODES))
   code <- CURRENCY_CODES[id]
 
-  cat("\n")
-  amount <- read_amount(sprintf("%s (%s): ", title, code))
+  amount <- read_amount(sprintf("%s (%s): ", title, code), MAX_TXN_AMOUNT)
 
-  # todo convert first to php because php yung balance
+  # convert first to php because php yung balance
+  php_amount <- to_php(amount, rates[[code]])
+  if (php_amount <= 0) {
+    cat("Amount is too small (less than 0.01 PHP). Transaction cancelled.\n")
+    return(account)
+  }
+  if (code != "PHP") {
+    cat(sprintf("Converted Amount: %s PHP (1 %s = %.4f PHP)\n", money(php_amount), code, rates[[code]]))
+  }
 
-  # todo add the amount to the balance for deposit
-  # subtract the amount for withdraw if the balance is enough
-  # print the updated balance
+  # add for deposit, subtract for withdraw if the balance is enough
+  if (is_deposit) {
+    if (account$balance + php_amount > MAX_BALANCE) {
+      cat("Deposit would exceed the maximum allowed balance. Transaction cancelled.\n")
+      return(account)
+    }
+    account$balance <- round(account$balance + php_amount, 2)
+  } else {
+    if (php_amount > account$balance) {
+      cat("Insufficient balance. Transaction cancelled.\n")
+      return(account)
+    }
+    account$balance <- round(account$balance - php_amount, 2)
+  }
+
+  cat("Updated Balance: ", money(account$balance), "\n", sep = "")
   account
 }
 
@@ -163,14 +211,18 @@ currency_exchange <- function(rates) {
     cat("Source Currency Option:\n")
     print_currency_menu()
     src <- CURRENCY_CODES[read_int("Source Currency: ", 1, length(CURRENCY_CODES))]
-    amount <- read_amount("Source Amount: ")
+    amount <- read_amount("Source Amount: ", MAX_TXN_AMOUNT)
 
     cat("\nExchanged Currency Options:\n")
     print_currency_menu()
     dst <- CURRENCY_CODES[read_int("Exchange Currency: ", 1, length(CURRENCY_CODES))]
 
-    # todo compute the exchange amount
-    # print the exchange amount
+    if (src == dst) {
+      cat(sprintf("Source and exchange currency are the same (%s). Nothing to convert.\n", src))
+    } else {
+      result <- amount * rates[[src]] / rates[[dst]]
+      cat("Exchange Amount: ", money(result), "\n", sep = "")
+    }
 
     if (!read_yes_no("\nConvert another currency (Y/N)? ")) break
   }
@@ -184,12 +236,14 @@ record_exchange_rate <- function(rates) {
 
   # php cannot be changed since it is the base currency
   if (code == "PHP") {
-    cat("PHP is the base currency. Its rate is fixed at 1.00 and cannot be changed.\n")
+    cat("PHP is the base currency; its rate is fixed at 1.00 and cannot be changed.\n")
     return(rates)
   }
 
-  # todo ask for the new exchange rate
-  # save the new rate too
+  # ask for the new exchange rate then save it
+  cat(sprintf("Enter how many PHP equal 1 %s.\n", code))
+  rates[[code]] <- read_amount("Exchange Rate: ", MAX_RATE)
+  cat(sprintf("Recorded: 1 %s = %.4f PHP\n", code, rates[[code]]))
   rates
 }
 
@@ -198,16 +252,21 @@ show_interest <- function(account) {
   cat("\nShow Interest Amount\n")
   if (!has_account(account)) return(invisible(NULL))
   print_account_header(account)
-  cat("Interest Rate: ", INTEREST_RATE * 100, "%\n\n", sep = "")
+  cat("Interest Rate: ", ANNUAL_INTEREST_PCT, "%\n\n", sep = "")
 
-  # todo ask for the total number of days
+  days <- read_int("Total Number of Days: ", 1, MAX_PROJECTION_DAYS)
 
   # this is only a projection so the real balance is not changed
-  balance <- account$balance
+  # computed in centavos tapos /100 lang if ipiprint
+  balance <- round(account$balance * 100)
   cat("\nDay  | Interest | Balance |\n")
 
-  # todo compute the daily interest and balance for each day
-  # print each day as a row in the table
+  # compute the daily interest and balance for each day
+  for (day in 1:days) {
+    interest <- daily_interest(balance)
+    balance <- balance + interest
+    cat(sprintf("%-4d | %-8s | %-7s |\n", day, money(interest / 100), money(balance / 100)))
+  }
 }
 
 
