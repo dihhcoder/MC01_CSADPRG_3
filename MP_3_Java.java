@@ -3,9 +3,10 @@ Last names: ALCANTARA, ANGELES, CONSTANTINO, MATIBAG
 Language: Java
 Paradigm(s): Procedural, Object-Oriented
 ********************/
-import java.util.*;
-
-import javax.swing.JPopupMenu.Separator;
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 //In order to run the program, you need to have Java installed on your computer. 
 //You can download it from the official website: https://www.java.com/en/download/
